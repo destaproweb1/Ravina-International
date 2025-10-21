@@ -22,51 +22,57 @@
 
     <!-- Header -->
     <header>
-        <a href="index.html" class="logo"><i class="fas fa-hard-hat"></i> Ravina International</a>
-        
-        <!-- Desktop Navigation -->
-        <nav>
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="shop.html">Shop</a></li>
-                <li><a href="about.html">About Us</a></li>
-                <li><a href="contact.html">Contact Us</a></li>
-            </ul>
-        </nav>
+    <a href="index.html" class="logo"><img src="images/logo.png" alt="" style="width: auto; height: 50px;"> Ravina International</a>
+    
+    <!-- Desktop Navigation -->
+    <nav>
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li class="dropdown">
+                <a href="#" class="dropdown-toggle">Shop <i class="fas fa-chevron-down"></i></a>
+                <ul class="dropdown-menu">
+                    <li><a href="shop.html">Workwear</a></li>
+                    <li><a href="sports.html">Sportswear</a></li>
+                </ul>
+            </li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+        </ul>
+    </nav>
 
-        <!-- Desktop Actions -->
-        <div class="header-actions">
+    <!-- Desktop Actions -->
+    <div class="header-actions">
+        <a href="shop.html"><i class="fas fa-search"></i></a>
+        <a href="about.html"><i class="fas fa-user"></i></a>
+        <a href="cart.html"><i class="fas fa-shopping-cart"></i><span class="cart-count">0</span></a>
+    </div>
+
+    <!-- Mobile Menu Button -->
+    <button class="mobile-menu-btn" id="mobileMenuBtn">
+        <i class="fas fa-bars"></i>
+    </button>
+
+    <!-- Mobile Menu -->
+    <div class="mobile-menu" id="mobileMenu">
+        <ul>
+            <li><a href="index.html">Home</a></li>
+            <li class="mobile-dropdown">
+                <a href="#" class="mobile-dropdown-toggle">Shop <i class="fas fa-chevron-down"></i></a>
+                <ul class="mobile-dropdown-menu">
+                    <li><a href="shop.html">Workwear</a></li>
+                    <li><a href="sports.html">Sportswear</a></li>
+                </ul>
+            </li>
+            <li><a href="about.html">About Us</a></li>
+            <li><a href="contact.html">Contact Us</a></li>
+        </ul>
+        <div class="mobile-menu-actions">
             <a href="shop.html"><i class="fas fa-search"></i></a>
             <a href="about.html"><i class="fas fa-user"></i></a>
-            <a href="cart.html" class="cart-icon">
-                <i class="fas fa-shopping-cart"></i>
-                <span class="cart-count">0</span>
-            </a>
+            <a href="cart.html"><i class="fas fa-shopping-cart"></i><span class="mobile-cart-count">0</span></a>
         </div>
-
-        <!-- Mobile Menu Button -->
-        <button class="mobile-menu-btn" id="mobileMenuBtn">
-            <i class="fas fa-bars"></i>
-        </button>
-
-        <!-- Mobile Menu -->
-        <div class="mobile-menu" id="mobileMenu">
-            <ul>
-                <li><a href="index.html">Home</a></li>
-                <li><a href="shop.html">Shop</a></li>
-                <li><a href="about.html">About Us</a></li>
-                <li><a href="contact.html">Contact Us</a></li>
-            </ul>
-            <div class="mobile-menu-actions">
-                <a href="shop.html"><i class="fas fa-search"></i></a>
-                <a href="about.html"><i class="fas fa-user"></i></a>
-                <a href="cart.html" class="cart-icon">
-                    <i class="fas fa-shopping-cart"></i>
-                    <span class="mobile-cart-count">0</span>
-                </a>
-            </div>
-        </div>
-    </header>
+    </div>
+</header>
 
     <!-- Cart Hero Section -->
     <section class="cart-hero">
@@ -192,19 +198,17 @@
                 <h3>Ravina International</h3>
                 <p>Providing premium workwear for professionals since 2005. Quality, durability, and style in every garment.</p>
                 <div class="footer-social">
-                    <a href="#"><i class="fab fa-facebook-f"></i></a>
-                    <a href="#"><i class="fab fa-twitter"></i></a>
-                    <a href="#"><i class="fab fa-instagram"></i></a>
-                    <a href="#"><i class="fab fa-linkedin-in"></i></a>
+                     <a href="https://www.instagram.com/ravi.naintl2?igsh=MThmNDN4eGs0YzNvcw=="><i class="fab fa-instagram"></i></a>
                 </div>
             </div>
             <div class="footer-column">
                 <h3>Quick Links</h3>
                 <ul>
-                    <li><a href="index.html">Home</a></li>
+                    <li><a href="#">Home</a></li>
                     <li><a href="shop.html">Shop</a></li>
+                    <li><a href="shop.html">Workwear</a></li>
+                    <li><a href="sports.html">Sportswear</a></li>
                     <li><a href="cart.html">Shopping Cart</a></li>
-                    <li><a href="shop.html">Sale</a></li>
                 </ul>
             </div>
             <div class="footer-column">

@@ -136,6 +136,148 @@ nav ul li a:hover:after {
     font-weight: bold;
 }
 
+/* ========== DROPDOWN STYLES ========== */
+
+/* Desktop Dropdown */
+.dropdown {
+    position: relative;
+}
+
+.dropdown-toggle {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+}
+
+.dropdown-toggle i {
+    font-size: 0.8em;
+    transition: transform 0.3s ease;
+}
+
+.dropdown:hover .dropdown-toggle i {
+    transform: rotate(180deg);
+}
+
+.dropdown-menu {
+    position: absolute;
+    top: 100%;
+    left: 0;
+    background: white;
+    min-width: 180px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
+    border-radius: 8px;
+    opacity: 0;
+    visibility: hidden;
+    transform: translateY(-10px);
+    transition: all 0.3s ease;
+    z-index: 1000;
+    padding: 10px 0;
+    margin: 0;
+    list-style: none;
+}
+
+.dropdown:hover .dropdown-menu {
+    opacity: 1;
+    visibility: visible;
+    transform: translateY(0);
+}
+
+.dropdown-menu li {
+    margin: 0;
+}
+
+.dropdown-menu a {
+    display: block;
+    padding: 10px 20px;
+    color: #333;
+    text-decoration: none;
+    transition: all 0.3s ease;
+    border-left: 3px solid transparent;
+}
+
+.dropdown-menu a:hover {
+    background: #f8f9fa;
+    color: var(--accent);
+    border-left-color: var(--accent);
+}
+
+/* Mobile Dropdown */
+.mobile-dropdown {
+    position: relative;
+}
+
+.mobile-dropdown-toggle {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    width: 100%;
+    padding: 10px 0;
+    color: var(--dark);
+    text-decoration: none;
+    font-size: 18px;
+    font-weight: 600;
+    border-bottom: 1px solid #eee;
+}
+
+.mobile-dropdown-toggle i {
+    transition: transform 0.3s ease;
+}
+
+.mobile-dropdown.active .mobile-dropdown-toggle i {
+    transform: rotate(180deg);
+}
+
+.mobile-dropdown-menu {
+    max-height: 0;
+    overflow: hidden;
+    transition: max-height 0.3s ease;
+    background: rgba(255, 255, 255, 0.1);
+    margin: 0;
+    padding: 0;
+    list-style: none;
+}
+
+.mobile-dropdown.active .mobile-dropdown-menu {
+    max-height: 200px;
+}
+
+.mobile-dropdown-menu li {
+    margin: 0;
+}
+
+.mobile-dropdown-menu a {
+    padding: 12px 20px;
+    display: block;
+    border-left: 3px solid transparent;
+    color: rgba(255, 255, 255, 0.9);
+    text-decoration: none;
+    font-size: 16px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.mobile-dropdown-menu a:hover {
+    background: rgba(255, 255, 255, 0.1);
+    border-left-color: var(--accent);
+    color: white;
+}
+
+/* Ensure mobile menu links have proper contrast */
+.mobile-menu a {
+    color: var(--dark);
+}
+
+.mobile-dropdown-menu a {
+    color: var(--dark);
+    opacity: 0.9;
+}
+
+.mobile-dropdown-menu a:hover {
+    color: var(--accent);
+    opacity: 1;
+}
+
+
+
 /* ========== MOBILE MENU STYLES ========== */
 .mobile-menu-btn {
     display: none;
@@ -232,7 +374,30 @@ nav ul li a:hover:after {
     opacity: 1;
     visibility: visible;
 }
+/* Cart item badges */
+.cart-item-image {
+    position: relative;
+}
 
+.item-badge {
+    position: absolute;
+    top: 10px;
+    left: 10px;
+    background: var(--secondary);
+    color: var(--dark);
+    padding: 4px 8px;
+    border-radius: 4px;
+    font-size: 0.7rem;
+    font-weight: bold;
+    text-transform: uppercase;
+}
+
+.cart-empty-actions {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
 /* ========== HERO SECTION ========== */
 .hero {
     height: 100vh;

@@ -1,13 +1,17 @@
 // ========== JAVASCRIPT FUNCTIONALITY ==========
 
 // Initialize global variables
-let header, mobileMenuBtn, mobileMenu, overlay, sections, backgrounds;
+let header, mobileMenuBtn, mobileMenu, sections, backgrounds;
 let currentBgIndex = 0;
 const bgTransitionInterval = 5000; // 5 seconds
 
-// Cart data
+// Cart data - unified system
 let cart = JSON.parse(localStorage.getItem('proWorkCart')) || [];
+let sportswearCart = JSON.parse(localStorage.getItem('sportswearCart')) || [];
 let appliedPromo = null;
+
+// Sportswear shop variables
+let sportswearFilterBtns, sportswearProductCards, sportswearCategoryCards;
 
 // ========== PAGE INITIALIZATION ==========
 function initializePage() {
@@ -15,7 +19,6 @@ function initializePage() {
     header = document.querySelector('header');
     mobileMenuBtn = document.getElementById('mobileMenuBtn');
     mobileMenu = document.getElementById('mobileMenu');
-    overlay = document.getElementById('overlay');
     sections = document.querySelectorAll('section, footer');
     backgrounds = document.querySelectorAll('.hero-bg');
 
@@ -24,6 +27,9 @@ function initializePage() {
     
     // Initialize page-specific functionality
     initializePageSpecificFeatures();
+    
+    // Update combined cart count
+    updateCombinedCartCount();
 }
 
 // ========== COMMON FEATURES ==========
@@ -54,9 +60,8 @@ function initializeCommonFeatures() {
 
     // Mobile menu functionality
     function toggleMobileMenu() {
-        if (mobileMenu && overlay) {
+        if (mobileMenu) {
             mobileMenu.classList.toggle('active');
-            overlay.classList.toggle('active');
             document.body.style.overflow = mobileMenu.classList.contains('active') ? 'hidden' : '';
         }
     }
@@ -65,27 +70,96 @@ function initializeCommonFeatures() {
         mobileMenuBtn.addEventListener('click', toggleMobileMenu);
     }
 
-    if (overlay) {
-        overlay.addEventListener('click', toggleMobileMenu);
+    // Mobile menu links
+    function handleMobileMenuClick(e) {
+        const link = e.target.closest('.mobile-menu a');
+        if (link && mobileMenu && mobileMenu.classList.contains('active')) {
+            toggleMobileMenu();
+        }
     }
 
-    // Close mobile menu when clicking on links
-    const mobileMenuLinks = document.querySelectorAll('.mobile-menu a');
-    mobileMenuLinks.forEach(link => {
-        link.addEventListener('click', toggleMobileMenu);
+    if (mobileMenu) {
+        mobileMenu.addEventListener('click', handleMobileMenuClick);
+    }
+
+    // Close mobile menu when clicking outside
+    document.addEventListener('click', (e) => {
+        if (mobileMenu && mobileMenu.classList.contains('active') && 
+            !mobileMenu.contains(e.target) && 
+            e.target !== mobileMenuBtn && 
+            !mobileMenuBtn.contains(e.target)) {
+            toggleMobileMenu();
+        }
     });
 
-    // Initialize cart count
-    updateCartCount();
-    
+    // Close mobile menu on escape key
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && mobileMenu && mobileMenu.classList.contains('active')) {
+            toggleMobileMenu();
+        }
+    });
+
+    // Initialize mobile dropdowns
+    initializeMobileDropdowns();
+
     // Preload images
     preloadImages();
+}
+
+// ========== MOBILE DROPDOWN FUNCTIONALITY ==========
+function initializeMobileDropdowns() {
+    const mobileDropdownToggles = document.querySelectorAll('.mobile-dropdown-toggle');
+    
+    if (mobileDropdownToggles.length === 0) {
+        console.log('No mobile dropdowns found');
+        return;
+    }
+    
+    mobileDropdownToggles.forEach(toggle => {
+        toggle.addEventListener('click', function(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            
+            const dropdown = this.parentElement;
+            const isActive = dropdown.classList.contains('active');
+            
+            // Close all other dropdowns
+            document.querySelectorAll('.mobile-dropdown').forEach(item => {
+                if (item !== dropdown) {
+                    item.classList.remove('active');
+                }
+            });
+            
+            // Toggle current dropdown
+            dropdown.classList.toggle('active', !isActive);
+        });
+    });
+
+    // Close dropdowns when clicking outside
+    document.addEventListener('click', function(e) {
+        if (!e.target.closest('.mobile-dropdown')) {
+            document.querySelectorAll('.mobile-dropdown').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+    });
+
+    // Close dropdowns on escape key
+    document.addEventListener('keydown', function(e) {
+        if (e.key === 'Escape') {
+            document.querySelectorAll('.mobile-dropdown').forEach(item => {
+                item.classList.remove('active');
+            });
+        }
+    });
 }
 
 // ========== PAGE-SPECIFIC FEATURES ==========
 function initializePageSpecificFeatures() {
     const path = window.location.pathname;
     const page = path.split('/').pop() || 'index.html';
+
+    console.log('Initializing page:', page);
 
     switch(page) {
         case 'index.html':
@@ -102,35 +176,47 @@ function initializePageSpecificFeatures() {
         case 'shop.html':
             initializeShopPage();
             break;
+        case 'sports.html':
+            initializeSportswearPage();
+            break;
         case 'cart.html':
             initializeCartPage();
             break;
         default:
-            // Default to index features if page not recognized
-            if (backgrounds.length > 0) {
+            // Check for sportswear page by content
+            const heroTitle = document.querySelector('.shop-hero h1');
+            if (heroTitle && heroTitle.textContent.includes('Sportswear')) {
+                initializeSportswearPage();
+            } else if (backgrounds.length > 0) {
                 initializeIndexPage();
+            } else {
+                console.log('No specific page handler for:', page);
             }
     }
 }
 
 // ========== INDEX PAGE FEATURES ==========
 function initializeIndexPage() {
+    console.log('Initializing index page');
+    
     // Hero background transition
     function changeBackground() {
         if (backgrounds.length > 0) {
             backgrounds.forEach((bg, index) => {
-                bg.style.transform = `translateX(${(index - currentBgIndex) * 100}%)`;
-                
-                if (index === currentBgIndex) {
-                    bg.style.filter = 'brightness(0.8)';
-                } else if (index === (currentBgIndex + 1) % 3) {
-                    bg.style.filter = 'brightness(0.8) hue-rotate(90deg)';
-                } else {
-                    bg.style.filter = 'brightness(0.8) hue-rotate(180deg)';
+                if (bg.style) {
+                    bg.style.transform = `translateX(${(index - currentBgIndex) * 100}%)`;
+                    
+                    if (index === currentBgIndex) {
+                        bg.style.filter = 'brightness(0.8)';
+                    } else if (index === (currentBgIndex + 1) % backgrounds.length) {
+                        bg.style.filter = 'brightness(0.8) hue-rotate(90deg)';
+                    } else {
+                        bg.style.filter = 'brightness(0.8) hue-rotate(180deg)';
+                    }
                 }
             });
             
-            currentBgIndex = (currentBgIndex + 1) % 3;
+            currentBgIndex = (currentBgIndex + 1) % backgrounds.length;
         }
     }
     
@@ -153,7 +239,6 @@ function initializeIndexPage() {
 
 // ========== ABOUT PAGE FEATURES ==========
 function initializeAboutPage() {
-    // About page doesn't need additional JS beyond common features
     console.log('About page initialized');
 }
 
@@ -195,14 +280,25 @@ function initializeContactPage() {
     }
 }
 
-// ========== SHOP PAGE FEATURES ==========
+// ========== SHOP PAGE FEATURES (WORKWEAR) ==========
 function initializeShopPage() {
+    console.log('Initializing workwear shop page');
+    
     const filterBtns = document.querySelectorAll('.filter-btn');
     const productCards = document.querySelectorAll('.product-card');
     const categoryCards = document.querySelectorAll('.category-card');
     const wishlistBtns = document.querySelectorAll('.wishlist-btn');
     const shareBtns = document.querySelectorAll('.share-btn');
     const addToCartBtns = document.querySelectorAll('.add-to-cart');
+
+    console.log('Found elements:', {
+        filterBtns: filterBtns.length,
+        productCards: productCards.length,
+        categoryCards: categoryCards.length,
+        wishlistBtns: wishlistBtns.length,
+        shareBtns: shareBtns.length,
+        addToCartBtns: addToCartBtns.length
+    });
 
     // Product filtering
     if (filterBtns.length > 0) {
@@ -216,7 +312,9 @@ function initializeShopPage() {
                 productCards.forEach(card => {
                     if (filter === 'all' || card.getAttribute('data-category') === filter) {
                         card.style.display = 'block';
-                        card.style.animation = 'fadeIn 0.5s ease forwards';
+                        setTimeout(() => {
+                            card.style.animation = 'fadeIn 0.5s ease forwards';
+                        }, 10);
                     } else {
                         card.style.display = 'none';
                     }
@@ -305,17 +403,237 @@ function initializeShopPage() {
     }
 }
 
-// ========== CART PAGE FEATURES ==========
+// ========== SPORTSWEAR PAGE FEATURES ==========
+function initializeSportswearPage() {
+    console.log('Initializing sportswear page');
+    
+    // Get sportswear-specific elements
+    sportswearFilterBtns = document.querySelectorAll('.products-filter .filter-btn');
+    sportswearProductCards = document.querySelectorAll('.products-section .product-card');
+    sportswearCategoryCards = document.querySelectorAll('.categories-section .category-card');
+
+    console.log('Sportswear elements:', {
+        filterBtns: sportswearFilterBtns.length,
+        productCards: sportswearProductCards.length,
+        categoryCards: sportswearCategoryCards.length
+    });
+
+    // Initialize sportswear functionality
+    initializeSportswearFiltering();
+    initializeSportswearCategoryClicks();
+    initializeSportswearProductInteractions();
+    initializeSportswearWishlist();
+    initializeSportswearShareFunctionality();
+    initializeSportswearAddToCart();
+    initializeSportswearSizeGuide();
+    initializeSportswearTeamCustomization();
+}
+
+function initializeSportswearFiltering() {
+    if (sportswearFilterBtns && sportswearFilterBtns.length > 0) {
+        sportswearFilterBtns.forEach(btn => {
+            btn.addEventListener('click', () => {
+                sportswearFilterBtns.forEach(b => b.classList.remove('active'));
+                btn.classList.add('active');
+                
+                const filter = btn.getAttribute('data-filter');
+                
+                sportswearProductCards.forEach(card => {
+                    if (filter === 'all' || card.getAttribute('data-category') === filter) {
+                        card.style.display = 'block';
+                        card.style.animation = 'fadeIn 0.5s ease forwards';
+                    } else {
+                        card.style.display = 'none';
+                    }
+                });
+                
+                const categoryName = filter === 'all' ? 'All Sportswear' : btn.textContent;
+                createStyledAlert(`Showing ${categoryName}`, 'info');
+            });
+        });
+    }
+}
+
+function initializeSportswearCategoryClicks() {
+    if (sportswearCategoryCards && sportswearCategoryCards.length > 0) {
+        sportswearCategoryCards.forEach(card => {
+            card.addEventListener('click', () => {
+                const category = card.getAttribute('data-category');
+                
+                sportswearFilterBtns.forEach(btn => {
+                    if (btn.getAttribute('data-filter') === category) {
+                        btn.click();
+                    }
+                });
+                
+                const productsSection = document.querySelector('.products-section');
+                if (productsSection) {
+                    productsSection.scrollIntoView({ behavior: 'smooth' });
+                }
+            });
+        });
+    }
+}
+
+function initializeSportswearProductInteractions() {
+    if (sportswearProductCards && sportswearProductCards.length > 0) {
+        sportswearProductCards.forEach(card => {
+            card.addEventListener('click', (e) => {
+                if (!e.target.closest('.product-actions') && !e.target.closest('.add-to-cart')) {
+                    const productName = card.querySelector('h3')?.textContent;
+                    const productDescription = card.querySelector('.product-description')?.textContent;
+                    const productPrice = card.querySelector('.product-price')?.textContent;
+                    
+                    if (productName && productPrice && productDescription) {
+                        createStyledAlert(
+                            `<strong>${productName}</strong><br>${productPrice}<br><br>${productDescription}`,
+                            'info'
+                        );
+                    }
+                }
+            });
+        });
+    }
+}
+
+function initializeSportswearWishlist() {
+    const wishlistBtns = document.querySelectorAll('.wishlist-btn');
+    
+    if (wishlistBtns.length > 0) {
+        wishlistBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const productCard = btn.closest('.product-card');
+                const productName = productCard?.querySelector('h3')?.textContent;
+                
+                const icon = btn.querySelector('i');
+                if (icon && productName) {
+                    if (icon.classList.contains('far')) {
+                        icon.classList.remove('far');
+                        icon.classList.add('fas');
+                        btn.style.color = 'var(--accent)';
+                        createStyledAlert(`Added "<strong>${productName}</strong>" to your wishlist!`, 'success');
+                    } else {
+                        icon.classList.remove('fas');
+                        icon.classList.add('far');
+                        btn.style.color = '';
+                        createStyledAlert(`Removed "<strong>${productName}</strong>" from your wishlist!`, 'info');
+                    }
+                }
+            });
+        });
+    }
+}
+
+function initializeSportswearShareFunctionality() {
+    const shareBtns = document.querySelectorAll('.share-btn');
+    
+    if (shareBtns.length > 0) {
+        shareBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const productCard = btn.closest('.product-card');
+                if (productCard) {
+                    const currentProduct = {
+                        name: productCard.querySelector('h3')?.textContent || 'Sportswear Product',
+                        description: productCard.querySelector('.product-description')?.textContent || '',
+                        price: productCard.querySelector('.product-price')?.textContent || '',
+                        image: productCard.querySelector('img')?.src || '',
+                        url: window.location.href + '?product=' + encodeURIComponent(productCard.querySelector('h3')?.textContent || '')
+                    };
+                    
+                    openShareModal(currentProduct);
+                }
+            });
+        });
+    }
+}
+
+function initializeSportswearAddToCart() {
+    const addToCartBtns = document.querySelectorAll('.add-to-cart');
+    
+    if (addToCartBtns.length > 0) {
+        addToCartBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const productId = btn.getAttribute('data-product-id');
+                const productName = btn.getAttribute('data-product-name');
+                const productPrice = btn.getAttribute('data-product-price');
+                const productImage = btn.getAttribute('data-product-image');
+                
+                if (productId && productName && productPrice && productImage) {
+                    const quantity = addToSportswearCart(productId, productName, productPrice, productImage);
+                    
+                    const originalText = btn.textContent;
+                    btn.textContent = `Added (${quantity})`;
+                    btn.classList.add('added');
+                    
+                    setTimeout(() => {
+                        btn.textContent = originalText;
+                        btn.classList.remove('added');
+                    }, 2000);
+                    
+                    createStyledAlert(`Added "<strong>${productName}</strong>" to your cart!<br>${productPrice}`, 'success');
+                }
+            });
+        });
+    }
+}
+
+function initializeSportswearSizeGuide() {
+    const sizeGuideBtn = document.querySelector('.size-guide-btn');
+    if (sizeGuideBtn) {
+        sizeGuideBtn.addEventListener('click', () => {
+            createStyledAlert(`
+                <strong>Sportswear Size Guide</strong><br><br>
+                <strong>Jerseys:</strong> S(34-36), M(38-40), L(42-44), XL(46-48)<br>
+                <strong>Shorts:</strong> S(30-32), M(32-34), L(36-38), XL(40-42)<br>
+                <strong>Shoes:</strong> US 7-13 available<br>
+                <em>Need help? Contact our sizing experts!</em>
+            `, 'info');
+        });
+    }
+}
+
+function initializeSportswearTeamCustomization() {
+    const customizeBtns = document.querySelectorAll('.customize-btn');
+    if (customizeBtns.length > 0) {
+        customizeBtns.forEach(btn => {
+            btn.addEventListener('click', (e) => {
+                e.stopPropagation();
+                createStyledAlert(`
+                    <strong>Team Customization Available!</strong><br><br>
+                    We offer:<br>
+                    • Custom team logos<br>
+                    • Player names and numbers<br>
+                    • Team colors<br>
+                    • Bulk order discounts<br><br>
+                    <a href="contact.html" style="color: var(--secondary); text-decoration: underline;">Contact us for a quote</a>
+                `, 'info');
+            });
+        });
+    }
+}
+
+// ========== CART PAGE FEATURES (UNIFIED) ==========
 function initializeCartPage() {
+    console.log('Initializing cart page');
+    
     const checkoutBtn = document.getElementById('checkoutBtn');
     const cartItemsContainer = document.getElementById('cartItemsContainer');
     const applyPromoBtn = document.getElementById('applyPromo');
     const promoCodeInput = document.getElementById('promoCode');
-    const addToCartBtns = document.querySelectorAll('.add-to-cart');
 
-    // Render cart items
+    console.log('Cart elements:', {
+        checkoutBtn: !!checkoutBtn,
+        cartItemsContainer: !!cartItemsContainer,
+        applyPromoBtn: !!applyPromoBtn,
+        promoCodeInput: !!promoCodeInput
+    });
+
+    // Render combined cart items
     if (cartItemsContainer) {
-        renderCartItems();
+        renderCombinedCartItems();
     }
 
     // Promo code functionality
@@ -326,15 +644,15 @@ function initializeCartPage() {
             if (promoCode === 'SAVE10') {
                 appliedPromo = { code: 'SAVE10', discount: 0.1 };
                 createStyledAlert('Promo code applied! 10% discount added.', 'success');
-                updateCartSummary();
+                updateCombinedCartSummary();
             } else if (promoCode === 'FREESHIP') {
                 appliedPromo = { code: 'FREESHIP', freeShipping: true };
                 createStyledAlert('Promo code applied! Free shipping added.', 'success');
-                updateCartSummary();
+                updateCombinedCartSummary();
             } else if (promoCode) {
                 createStyledAlert('Invalid promo code', 'error');
                 appliedPromo = null;
-                updateCartSummary();
+                updateCombinedCartSummary();
             }
         });
     }
@@ -342,7 +660,8 @@ function initializeCartPage() {
     // Checkout functionality
     if (checkoutBtn) {
         checkoutBtn.addEventListener('click', function() {
-            if (cart.length === 0) {
+            const totalItems = cart.length + sportswearCart.length;
+            if (totalItems === 0) {
                 createStyledAlert('Your cart is empty!', 'warning');
                 return;
             }
@@ -353,11 +672,6 @@ function initializeCartPage() {
                 createStyledAlert('Checkout functionality would be implemented here', 'info');
             }, 1000);
         });
-    }
-
-    // Add to cart from recommended products
-    if (addToCartBtns.length > 0) {
-        initializeAddToCartFunctionality(addToCartBtns);
     }
 }
 
@@ -399,10 +713,12 @@ function createStyledAlert(message, type = 'info') {
     }, 4000);
     
     const closeBtn = alert.querySelector('.custom-alert-close');
-    closeBtn.addEventListener('click', () => {
-        clearTimeout(autoRemove);
-        removeAlert(alert);
-    });
+    if (closeBtn) {
+        closeBtn.addEventListener('click', () => {
+            clearTimeout(autoRemove);
+            removeAlert(alert);
+        });
+    }
     
     alert.addEventListener('click', (e) => {
         if (e.target === alert) {
@@ -421,171 +737,6 @@ function removeAlert(alert) {
     }, 300);
 }
 
-// Cart functionality
-function updateCartCount() {
-    const totalItems = cart.reduce((total, item) => total + item.quantity, 0);
-    const cartCount = document.querySelector('.cart-count');
-    const mobileCartCount = document.querySelector('.mobile-cart-count');
-    
-    if (cartCount) cartCount.textContent = totalItems;
-    if (mobileCartCount) mobileCartCount.textContent = totalItems;
-}
-
-function addToCart(productId, productName, productPrice, productImage) {
-    const existingItem = cart.find(item => item.id === productId);
-    
-    if (existingItem) {
-        existingItem.quantity += 1;
-    } else {
-        cart.push({
-            id: productId,
-            name: productName,
-            price: parseFloat(productPrice),
-            image: productImage,
-            quantity: 1
-        });
-    }
-    
-    localStorage.setItem('proWorkCart', JSON.stringify(cart));
-    updateCartCount();
-    
-    // Update cart page if we're on it
-    const cartItemsContainer = document.getElementById('cartItemsContainer');
-    if (cartItemsContainer) {
-        renderCartItems();
-    }
-    
-    return existingItem ? existingItem.quantity : 1;
-}
-
-function removeFromCart(productId) {
-    cart = cart.filter(item => item.id !== productId);
-    localStorage.setItem('proWorkCart', JSON.stringify(cart));
-    updateCartCount();
-    renderCartItems();
-}
-
-function updateQuantity(productId, newQuantity) {
-    if (newQuantity < 1) return;
-    
-    const item = cart.find(item => item.id === productId);
-    if (item) {
-        item.quantity = newQuantity;
-        localStorage.setItem('proWorkCart', JSON.stringify(cart));
-        updateCartCount();
-        renderCartItems();
-    }
-}
-
-function renderCartItems() {
-    const cartItemsContainer = document.getElementById('cartItemsContainer');
-    if (!cartItemsContainer) return;
-    
-    if (cart.length === 0) {
-        cartItemsContainer.innerHTML = `
-            <div class="empty-cart">
-                <i class="fas fa-shopping-cart"></i>
-                <h3>Your cart is empty</h3>
-                <p>Add some items to your cart to get started</p>
-                <a href="shop.html" class="continue-shopping">Continue Shopping</a>
-            </div>
-        `;
-        updateCartSummary();
-        return;
-    }
-
-    const cartHeader = `
-        <div class="cart-header">
-            <h2>Your Items (${cart.reduce((total, item) => total + item.quantity, 0)})</h2>
-            <span>Price</span>
-        </div>
-    `;
-
-    const cartItemsHTML = cart.map(item => `
-        <div class="cart-item" data-product-id="${item.id}">
-            <div class="cart-item-image">
-                <img src="${item.image}" alt="${item.name}">
-            </div>
-            <div class="cart-item-details">
-                <div class="cart-item-info">
-                    <h3>${item.name}</h3>
-                    <p>Size: One Size | Color: Standard</p>
-                    <div class="cart-item-price">$${item.price.toFixed(2)}</div>
-                </div>
-                <div class="cart-item-controls">
-                    <div class="quantity-controls">
-                        <button class="quantity-btn minus-btn" data-product-id="${item.id}">-</button>
-                        <input type="text" class="quantity-input" value="${item.quantity}" readonly data-product-id="${item.id}">
-                        <button class="quantity-btn plus-btn" data-product-id="${item.id}">+</button>
-                    </div>
-                    <button class="remove-item" data-product-id="${item.id}">Remove</button>
-                </div>
-            </div>
-        </div>
-    `).join('');
-
-    cartItemsContainer.innerHTML = cartHeader + cartItemsHTML;
-    attachCartEventListeners();
-    updateCartSummary();
-}
-
-function attachCartEventListeners() {
-    document.querySelectorAll('.quantity-btn').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const productId = this.getAttribute('data-product-id');
-            const input = document.querySelector(`.quantity-input[data-product-id="${productId}"]`);
-            let value = parseInt(input.value);
-            
-            if (this.classList.contains('plus-btn')) {
-                value++;
-            } else if (this.classList.contains('minus-btn') && value > 1) {
-                value--;
-            }
-            
-            updateQuantity(productId, value);
-            createStyledAlert('Cart updated', 'info');
-        });
-    });
-
-    document.querySelectorAll('.remove-item').forEach(btn => {
-        btn.addEventListener('click', function() {
-            const productId = this.getAttribute('data-product-id');
-            const productName = cart.find(item => item.id === productId)?.name;
-            
-            removeFromCart(productId);
-            createStyledAlert(`Removed <strong>${productName}</strong> from cart`, 'info');
-        });
-    });
-}
-
-function updateCartSummary() {
-    const subtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
-    const shipping = subtotal > 200 ? 0 : 9.99;
-    const tax = subtotal * 0.08;
-    
-    let discount = 0;
-    if (appliedPromo && appliedPromo.discount) {
-        discount = subtotal * appliedPromo.discount;
-    }
-    if (appliedPromo && appliedPromo.freeShipping) {
-        shipping = 0;
-    }
-    
-    const total = subtotal + shipping + tax - discount;
-
-    const itemCountEl = document.getElementById('itemCount');
-    const subtotalEl = document.getElementById('subtotal');
-    const shippingEl = document.getElementById('shipping');
-    const taxEl = document.getElementById('tax');
-    const totalEl = document.getElementById('total');
-
-    if (itemCountEl) itemCountEl.textContent = cart.reduce((total, item) => total + item.quantity, 0);
-    if (subtotalEl) subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
-    if (shippingEl) shippingEl.textContent = `$${shipping.toFixed(2)}`;
-    if (taxEl) taxEl.textContent = `$${tax.toFixed(2)}`;
-    if (totalEl) totalEl.textContent = `$${total.toFixed(2)}`;
-}
-
 // Share functionality
 function initializeShareFunctionality(shareBtns) {
     const shareModal = document.getElementById('shareModal');
@@ -596,32 +747,16 @@ function initializeShareFunctionality(shareBtns) {
 
     let currentProduct = null;
 
-    shareBtns.forEach(btn => {
-        btn.addEventListener('click', (e) => {
-            e.stopPropagation();
-            const productCard = btn.closest('.product-card');
-            if (productCard) {
-                currentProduct = {
-                    name: productCard.querySelector('h3')?.textContent || 'Product',
-                    description: productCard.querySelector('.product-description')?.textContent || '',
-                    price: productCard.querySelector('.product-price')?.textContent || '',
-                    image: productCard.querySelector('img')?.src || '',
-                    url: window.location.href + '?product=' + encodeURIComponent(productCard.querySelector('h3')?.textContent || '')
-                };
-                
-                openShareModal();
-            }
-        });
-    });
-
-    function openShareModal() {
-        if (!currentProduct || !shareModal || !shareLinkInput) return;
+    // Function to open share modal
+    function openShareModal(product) {
+        if (!product || !shareModal || !shareLinkInput) return;
         
-        shareLinkInput.value = currentProduct.url;
+        shareLinkInput.value = product.url;
         shareModal.classList.add('active');
         document.body.style.overflow = 'hidden';
     }
 
+    // Function to close share modal
     function closeShareModal() {
         if (shareModal) {
             shareModal.classList.remove('active');
@@ -635,68 +770,11 @@ function initializeShareFunctionality(shareBtns) {
         }
     }
 
-    if (shareModalClose) {
-        shareModalClose.addEventListener('click', closeShareModal);
-    }
-
-    if (shareModal) {
-        shareModal.addEventListener('click', (e) => {
-            if (e.target === shareModal) {
-                closeShareModal();
-            }
-        });
-    }
-
-    document.addEventListener('keydown', (e) => {
-        if (e.key === 'Escape' && shareModal && shareModal.classList.contains('active')) {
-            closeShareModal();
-        }
-    });
-
-    if (copyLinkBtn) {
-        copyLinkBtn.addEventListener('click', async () => {
-            if (!shareLinkInput) return;
-            
-            try {
-                await navigator.clipboard.writeText(shareLinkInput.value);
-                copyLinkBtn.classList.add('copied');
-                copyLinkBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-                
-                setTimeout(() => {
-                    copyLinkBtn.classList.remove('copied');
-                    copyLinkBtn.innerHTML = '<i class="fas fa-copy"></i>';
-                }, 2000);
-                
-                createStyledAlert('Product link copied to clipboard!', 'success');
-            } catch (err) {
-                shareLinkInput.select();
-                document.execCommand('copy');
-                copyLinkBtn.classList.add('copied');
-                copyLinkBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
-                
-                setTimeout(() => {
-                    copyLinkBtn.classList.remove('copied');
-                    copyLinkBtn.innerHTML = '<i class="fas fa-copy"></i>';
-                }, 2000);
-                
-                createStyledAlert('Product link copied to clipboard!', 'success');
-            }
-        });
-    }
-
-    if (shareOptions.length > 0) {
-        shareOptions.forEach(option => {
-            option.addEventListener('click', () => {
-                const platform = option.getAttribute('data-platform');
-                shareToPlatform(platform);
-            });
-        });
-    }
-
+    // Share to platform function
     function shareToPlatform(platform) {
         if (!currentProduct) return;
         
-        const shareText = `Check out ${currentProduct.name} - ${currentProduct.price} at ProWork`;
+        const shareText = `Check out ${currentProduct.name} - ${currentProduct.price} at Ravina International`;
         const encodedText = encodeURIComponent(shareText);
         const encodedUrl = encodeURIComponent(currentProduct.url);
         
@@ -734,9 +812,88 @@ function initializeShareFunctionality(shareBtns) {
             closeShareModal();
         }, 1000);
     }
+
+    // Set up share button event listeners
+    shareBtns.forEach(btn => {
+        btn.addEventListener('click', (e) => {
+            e.stopPropagation();
+            const productCard = btn.closest('.product-card');
+            if (productCard) {
+                currentProduct = {
+                    name: productCard.querySelector('h3')?.textContent || 'Product',
+                    description: productCard.querySelector('.product-description')?.textContent || '',
+                    price: productCard.querySelector('.product-price')?.textContent || '',
+                    image: productCard.querySelector('img')?.src || '',
+                    url: window.location.href + '?product=' + encodeURIComponent(productCard.querySelector('h3')?.textContent || '')
+                };
+                
+                openShareModal(currentProduct);
+            }
+        });
+    });
+
+    // Set up modal event listeners
+    if (shareModalClose) {
+        shareModalClose.addEventListener('click', closeShareModal);
+    }
+
+    if (shareModal) {
+        shareModal.addEventListener('click', (e) => {
+            if (e.target === shareModal) {
+                closeShareModal();
+            }
+        });
+    }
+
+    document.addEventListener('keydown', (e) => {
+        if (e.key === 'Escape' && shareModal && shareModal.classList.contains('active')) {
+            closeShareModal();
+        }
+    });
+
+    if (copyLinkBtn) {
+        copyLinkBtn.addEventListener('click', async () => {
+            if (!shareLinkInput) return;
+            
+            try {
+                await navigator.clipboard.writeText(shareLinkInput.value);
+                copyLinkBtn.classList.add('copied');
+                copyLinkBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                
+                setTimeout(() => {
+                    copyLinkBtn.classList.remove('copied');
+                    copyLinkBtn.innerHTML = '<i class="fas fa-copy"></i>';
+                }, 2000);
+                
+                createStyledAlert('Product link copied to clipboard!', 'success');
+            } catch (err) {
+                // Fallback for older browsers
+                shareLinkInput.select();
+                document.execCommand('copy');
+                copyLinkBtn.classList.add('copied');
+                copyLinkBtn.innerHTML = '<i class="fas fa-check"></i> Copied!';
+                
+                setTimeout(() => {
+                    copyLinkBtn.classList.remove('copied');
+                    copyLinkBtn.innerHTML = '<i class="fas fa-copy"></i>';
+                }, 2000);
+                
+                createStyledAlert('Product link copied to clipboard!', 'success');
+            }
+        });
+    }
+
+    if (shareOptions.length > 0) {
+        shareOptions.forEach(option => {
+            option.addEventListener('click', () => {
+                const platform = option.getAttribute('data-platform');
+                shareToPlatform(platform);
+            });
+        });
+    }
 }
 
-// Add to cart functionality
+// Add to cart functionality for workwear
 function initializeAddToCartFunctionality(addToCartBtns) {
     addToCartBtns.forEach(btn => {
         btn.addEventListener('click', (e) => {
@@ -764,18 +921,277 @@ function initializeAddToCartFunctionality(addToCartBtns) {
     });
 }
 
+// ========== CART FUNCTIONALITY ==========
+
+// Workwear cart functions
+function addToCart(productId, productName, productPrice, productImage) {
+    const existingItem = cart.find(item => item.id === productId);
+    
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        cart.push({
+            id: productId,
+            name: productName,
+            price: parseFloat(productPrice),
+            image: productImage,
+            quantity: 1
+        });
+    }
+    
+    localStorage.setItem('proWorkCart', JSON.stringify(cart));
+    updateCombinedCartCount();
+    
+    // Update cart page if we're on it
+    const cartItemsContainer = document.getElementById('cartItemsContainer');
+    if (cartItemsContainer) {
+        renderCombinedCartItems();
+    }
+    
+    return existingItem ? existingItem.quantity : 1;
+}
+
+function removeFromCart(productId) {
+    cart = cart.filter(item => item.id !== productId);
+    localStorage.setItem('proWorkCart', JSON.stringify(cart));
+    updateCombinedCartCount();
+    
+    const cartItemsContainer = document.getElementById('cartItemsContainer');
+    if (cartItemsContainer) {
+        renderCombinedCartItems();
+    }
+}
+
+function updateQuantity(productId, newQuantity) {
+    if (newQuantity < 1) return;
+    
+    const item = cart.find(item => item.id === productId);
+    if (item) {
+        item.quantity = newQuantity;
+        localStorage.setItem('proWorkCart', JSON.stringify(cart));
+        updateCombinedCartCount();
+        
+        const cartItemsContainer = document.getElementById('cartItemsContainer');
+        if (cartItemsContainer) {
+            renderCombinedCartItems();
+        }
+    }
+}
+
+// Sportswear cart functions
+function addToSportswearCart(productId, productName, productPrice, productImage) {
+    const existingItem = sportswearCart.find(item => item.id === productId);
+    
+    if (existingItem) {
+        existingItem.quantity += 1;
+    } else {
+        sportswearCart.push({
+            id: productId,
+            name: productName,
+            price: parseFloat(productPrice.replace('$', '')),
+            image: productImage,
+            quantity: 1
+        });
+    }
+    
+    localStorage.setItem('sportswearCart', JSON.stringify(sportswearCart));
+    updateCombinedCartCount();
+    
+    // Update cart page if we're on it
+    const cartItemsContainer = document.getElementById('cartItemsContainer');
+    if (cartItemsContainer) {
+        renderCombinedCartItems();
+    }
+    
+    return existingItem ? existingItem.quantity : 1;
+}
+
+function removeFromSportswearCart(productId) {
+    sportswearCart = sportswearCart.filter(item => item.id !== productId);
+    localStorage.setItem('sportswearCart', JSON.stringify(sportswearCart));
+    updateCombinedCartCount();
+    
+    const cartItemsContainer = document.getElementById('cartItemsContainer');
+    if (cartItemsContainer) {
+        renderCombinedCartItems();
+    }
+}
+
+function updateSportswearQuantity(productId, newQuantity) {
+    if (newQuantity < 1) return;
+    
+    const item = sportswearCart.find(item => item.id === productId);
+    if (item) {
+        item.quantity = newQuantity;
+        localStorage.setItem('sportswearCart', JSON.stringify(sportswearCart));
+        updateCombinedCartCount();
+        
+        const cartItemsContainer = document.getElementById('cartItemsContainer');
+        if (cartItemsContainer) {
+            renderCombinedCartItems();
+        }
+    }
+}
+
+// Combined cart functions
+function updateCombinedCartCount() {
+    const workwearItems = cart.reduce((total, item) => total + item.quantity, 0);
+    const sportswearItems = sportswearCart.reduce((total, item) => total + item.quantity, 0);
+    const totalItems = workwearItems + sportswearItems;
+    
+    const cartCount = document.querySelector('.cart-count');
+    const mobileCartCount = document.querySelector('.mobile-cart-count');
+    
+    if (cartCount) cartCount.textContent = totalItems;
+    if (mobileCartCount) mobileCartCount.textContent = totalItems;
+}
+
+function renderCombinedCartItems() {
+    const cartItemsContainer = document.getElementById('cartItemsContainer');
+    if (!cartItemsContainer) return;
+    
+    const workwearItems = cart.map(item => ({...item, type: 'workwear'}));
+    const sportswearItems = sportswearCart.map(item => ({...item, type: 'sportswear'}));
+    const combinedItems = [...workwearItems, ...sportswearItems];
+    
+    if (combinedItems.length === 0) {
+        cartItemsContainer.innerHTML = `
+            <div class="empty-cart">
+                <i class="fas fa-shopping-cart"></i>
+                <h3>Your cart is empty</h3>
+                <p>Add some items to your cart to get started</p>
+                <div class="cart-empty-actions">
+                    <a href="shop.html" class="continue-shopping">Browse Workwear</a>
+                    <a href="sports.html" class="continue-shopping">Browse Sportswear</a>
+                </div>
+            </div>
+        `;
+        updateCombinedCartSummary();
+        return;
+    }
+
+    const cartHeader = `
+        <div class="cart-header">
+            <h2>Your Items (${combinedItems.reduce((total, item) => total + item.quantity, 0)})</h2>
+            <span>Price</span>
+        </div>
+    `;
+
+    const cartItemsHTML = combinedItems.map(item => `
+        <div class="cart-item" data-product-id="${item.id}" data-product-type="${item.type}">
+            <div class="cart-item-image">
+                <img src="${item.image}" alt="${item.name}">
+                <div class="item-badge ${item.type}">${item.type === 'sportswear' ? 'Sportswear' : 'Workwear'}</div>
+            </div>
+            <div class="cart-item-details">
+                <div class="cart-item-info">
+                    <h3>${item.name}</h3>
+                    <p>${item.type === 'sportswear' ? 'Size: Standard | Color: As shown' : 'Size: One Size | Color: Standard'}</p>
+                    <div class="cart-item-price">$${item.price.toFixed(2)}</div>
+                </div>
+                <div class="cart-item-controls">
+                    <div class="quantity-controls">
+                        <button class="quantity-btn minus-btn" data-product-id="${item.id}" data-product-type="${item.type}">-</button>
+                        <input type="text" class="quantity-input" value="${item.quantity}" readonly data-product-id="${item.id}" data-product-type="${item.type}">
+                        <button class="quantity-btn plus-btn" data-product-id="${item.id}" data-product-type="${item.type}">+</button>
+                    </div>
+                    <button class="remove-item" data-product-id="${item.id}" data-product-type="${item.type}">Remove</button>
+                </div>
+            </div>
+        </div>
+    `).join('');
+
+    cartItemsContainer.innerHTML = cartHeader + cartItemsHTML;
+    attachCombinedCartEventListeners();
+    updateCombinedCartSummary();
+}
+
+function attachCombinedCartEventListeners() {
+    // Quantity buttons
+    document.querySelectorAll('.quantity-btn').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.getAttribute('data-product-id');
+            const productType = this.getAttribute('data-product-type');
+            const input = document.querySelector(`.quantity-input[data-product-id="${productId}"][data-product-type="${productType}"]`);
+            
+            if (!input) return;
+            
+            let value = parseInt(input.value);
+            
+            if (this.classList.contains('plus-btn')) {
+                value++;
+            } else if (this.classList.contains('minus-btn') && value > 1) {
+                value--;
+            }
+            
+            if (productType === 'sportswear') {
+                updateSportswearQuantity(productId, value);
+            } else {
+                updateQuantity(productId, value);
+            }
+            createStyledAlert('Cart updated', 'info');
+        });
+    });
+
+    // Remove buttons
+    document.querySelectorAll('.remove-item').forEach(btn => {
+        btn.addEventListener('click', function() {
+            const productId = this.getAttribute('data-product-id');
+            const productType = this.getAttribute('data-product-type');
+            
+            let productName = '';
+            if (productType === 'sportswear') {
+                const item = sportswearCart.find(item => item.id === productId);
+                productName = item ? item.name : 'Product';
+                removeFromSportswearCart(productId);
+            } else {
+                const item = cart.find(item => item.id === productId);
+                productName = item ? item.name : 'Product';
+                removeFromCart(productId);
+            }
+            
+            createStyledAlert(`Removed <strong>${productName}</strong> from cart`, 'info');
+        });
+    });
+}
+
+function updateCombinedCartSummary() {
+    const workwearSubtotal = cart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const sportswearSubtotal = sportswearCart.reduce((total, item) => total + (item.price * item.quantity), 0);
+    const subtotal = workwearSubtotal + sportswearSubtotal;
+    
+    let shipping = subtotal > 200 ? 0 : 9.99;
+    const tax = subtotal * 0.08;
+    
+    let discount = 0;
+    if (appliedPromo && appliedPromo.discount) {
+        discount = subtotal * appliedPromo.discount;
+    }
+    if (appliedPromo && appliedPromo.freeShipping) {
+        shipping = 0;
+    }
+    
+    const total = subtotal + shipping + tax - discount;
+
+    const itemCountEl = document.getElementById('itemCount');
+    const subtotalEl = document.getElementById('subtotal');
+    const shippingEl = document.getElementById('shipping');
+    const taxEl = document.getElementById('tax');
+    const totalEl = document.getElementById('total');
+
+    if (itemCountEl) itemCountEl.textContent = cart.reduce((total, item) => total + item.quantity, 0) + sportswearCart.reduce((total, item) => total + item.quantity, 0);
+    if (subtotalEl) subtotalEl.textContent = `$${subtotal.toFixed(2)}`;
+    if (shippingEl) shippingEl.textContent = `$${shipping.toFixed(2)}`;
+    if (taxEl) taxEl.textContent = `$${tax.toFixed(2)}`;
+    if (totalEl) totalEl.textContent = `$${total.toFixed(2)}`;
+}
+
 // Image preloading
 function preloadImages() {
     const imageUrls = [
         'https://images.unsplash.com/photo-1558769132-cb1aea458c5e?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1548&q=80',
         'https://images.unsplash.com/photo-1621905252507-b35492cc74b4?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1469&q=80',
-        'https://images.unsplash.com/photo-1582719471384-894fbb16e074?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-        'https://images.unsplash.com/photo-1556821840-3a63f95609a7?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80',
-        'https://images.unsplash.com/photo-1586790170083-2f9ceadc732d?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80',
-        'https://images.unsplash.com/photo-1624378439575-d8705ad7ae80?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=698&q=80',
-        'https://images.unsplash.com/photo-1552664730-d307ca884978?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-        'https://images.unsplash.com/photo-1581094794329-c8112a89af12?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80',
-        'https://images.unsplash.com/photo-1581093458791-8a6b22bb9a0a?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=687&q=80'
+        'https://images.unsplash.com/photo-1582719471384-894fbb16e074?ixlib=rb-4.0.3&ixid=M3wxMjA3fDB8MHxwaG90by1wYWdlfHx8fGVufDB8fHx8fA%3D%3D&auto=format&fit=crop&w=1470&q=80'
     ];
 
     imageUrls.forEach(url => {
@@ -784,5 +1200,21 @@ function preloadImages() {
     });
 }
 
-// ========== INITIALIZE WHEN DOM IS LOADED ==========
-document.addEventListener('DOMContentLoaded', initializePage);
+// ========== INITIALIZATION ==========
+document.addEventListener('DOMContentLoaded', function() {
+    console.log('DOM loaded, initializing page...');
+    initializePage();
+});
+
+// ========== ERROR HANDLING ==========
+window.addEventListener('error', function(e) {
+    console.error('Global error:', e.error);
+});
+
+// Export for global use
+window.sportswearShop = {
+    addToSportswearCart,
+    removeFromSportswearCart,
+    updateSportswearQuantity,
+    updateCombinedCartCount
+};
